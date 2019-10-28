@@ -1,10 +1,14 @@
 #include <bits/stdc++.h>
+#include <omp.h>
+#pragma GCC optimize ("O3")
 
 using namespace std;
 
 double dotProduct(const vector<double>& v1, const vector<double>& v2) {
     double cur_val=0;
-    for(int i=0; i < v1.size(); i++) {
+//    #pragma omp parallel default(none) reduction(+:cur_val) shared(v1,v2)
+    #pragma omp for
+    for(unsigned int i=0; i < v1.size(); i++) {
         cur_val += v1[i]*v2[i];
     }
     return cur_val;
@@ -31,6 +35,7 @@ private:
     vector< vector<double> > projections;
     HashKeyType generate_hash(const vector<double>& v) {
         HashKeyType cur=0;
+        #pragma omp for
         for(int i=0; i<HashSize; i++) {
             if(dotProduct(projections[i],v)>0) {
                 cur=cur|1;
@@ -107,7 +112,7 @@ public:
 };
 
 unordered_map<string, vector<double> > source;
-
+//#pragma omp parallel
 int main() {
     const int dimensions =50;
     double temp;
@@ -117,10 +122,11 @@ int main() {
 
     FILE * pFile;
     pFile = fopen ("../glove.6B.50d.txt","r");
-    for(int i=0;i<400000;i++) {
+    for(int i=0;i<40000;i++) {
         char label[100];
         vector<double> v;
         fscanf(pFile,"%s", label);
+        #pragma omp for
         for(int j=1;j<=dimensions;j++) {
             fscanf(pFile, "%lf",&temp);
             v.push_back(temp);
@@ -131,46 +137,47 @@ int main() {
 
     chrono::steady_clock::time_point end = chrono::steady_clock::now();
     cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
+    cout<<"max threads: "<<omp_get_max_threads()<<endl;
     char labelq[100] = "cat";
     vector<double> vq;
     vector<pair<double, string> > sortedres;
-    while(true) {
-        // Test Query
-        scanf("%s",labelq);
-        vq= source[labelq];
-
-        if(strcmp(labelq,"break!")==0) {
-            break;
-        }
-        begin = chrono::steady_clock::now();
-        // Process Query
-        auto res = lsh.get_item(vq);
-        cout<<"Word that is similar to "<<labelq<<" are: \n";
-        sortedres.clear();
-        for (const auto& ans:res) {
-            sortedres.emplace_back(1-cosineSimilarity(vq, source[ans]), ans);
-        }
-        sort(sortedres.begin(), sortedres.end());
-        cout<<"Number of possible matches: "<<res.size()<<endl;
-        for(int i=0;i< min(10,(int)sortedres.size());i++) {
-            cout<<sortedres[i].second<<" cosine distance="<<sortedres[i].first<<endl;
-        }
-        end = chrono::steady_clock::now();
-        cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-
-        cout<<"Manual test"<<endl;
-        sortedres.clear();
-        begin = chrono::steady_clock::now();
-        for(auto a:source) {
-            sortedres.emplace_back(1-cosineSimilarity(vq, a.second), a.first);
-        }
-        sort(sortedres.begin(),sortedres.end());
-        for(int i=0;i< min(10,(int)sortedres.size());i++) {
-            cout<<sortedres[i].second<<" cosine distance="<<sortedres[i].first<<endl;
-        }
-        end = chrono::steady_clock::now();
-        cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-    }
+//    while(true) {
+//        // Test Query
+//        scanf("%s",labelq);
+//        vq= source[labelq];
+//
+//        if(strcmp(labelq,"break!")==0) {
+//            break;
+//        }
+//        begin = chrono::steady_clock::now();
+//        // Process Query
+//        auto res = lsh.get_item(vq);
+//        cout<<"Word that is similar to "<<labelq<<" are: \n";
+//        sortedres.clear();
+//        for (const auto& ans:res) {
+//            sortedres.emplace_back(1-cosineSimilarity(vq, source[ans]), ans);
+//        }
+//        sort(sortedres.begin(), sortedres.end());
+//        cout<<"Number of possible matches: "<<res.size()<<endl;
+//        for(int i=0;i< min(10,(int)sortedres.size());i++) {
+//            cout<<sortedres[i].second<<" cosine distance="<<sortedres[i].first<<endl;
+//        }
+//        end = chrono::steady_clock::now();
+//        cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
+//
+//        cout<<"Manual test"<<endl;
+//        sortedres.clear();
+//        begin = chrono::steady_clock::now();
+//        for(auto a:source) {
+//            sortedres.emplace_back(1-cosineSimilarity(vq, a.second), a.first);
+//        }
+//        sort(sortedres.begin(),sortedres.end());
+//        for(int i=0;i< min(10,(int)sortedres.size());i++) {
+//            cout<<sortedres[i].second<<" cosine distance="<<sortedres[i].first<<endl;
+//        }
+//        end = chrono::steady_clock::now();
+//        cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
+//    }
 
     return 0;
 }
