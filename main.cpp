@@ -47,7 +47,8 @@ public:
         random_device rnd_device;
         // Specify the engine and distribution.
         mt19937 mersenne_engine {rnd_device()};  // Generates random double
-        uniform_real_distribution<double> dist(-10, 10);
+//        uniform_real_distribution<double> dist(-10, 10);
+        normal_distribution<double> dist;
         auto gen = [&dist, &mersenne_engine](){
             return dist(mersenne_engine);
         };
@@ -110,7 +111,7 @@ unordered_map<string, vector<double> > source;
 int main() {
     const int dimensions =50;
     double temp;
-    LSH<int, 30, 10, dimensions> lsh;
+    LSH<int, 50, 10, dimensions> lsh;
 
     chrono::steady_clock::time_point begin = chrono::steady_clock::now();
 
